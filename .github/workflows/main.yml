@@ -38,6 +38,8 @@ jobs:
           - beryllium-tianma
           - polaris
           - perseus
+          # sm8250
+          - x1q
           # sm7325
           - mona
           - lisa
