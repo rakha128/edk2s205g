@@ -25,15 +25,36 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential uuid-dev clang llvm iasl nasm \
+            build-essential uuid-dev clang llvm lld iasl nasm \
             gcc-aarch64-linux-gnu python3-pil python3-git gettext
 
+      - name: Toolchain info
+        run: |
+          uname -a
+          clang --version | head -n 2
+          aarch64-linux-gnu-gcc --version | head -n 1
+          iasl -v 2>&1 | head -n 3 || true
+          python3 --version
+
+      # pipefail is required: without it `| tee` hides a failing build.sh.
       - name: Build
         run: |
-          ./build.sh --device x1q
+          set -o pipefail
+          ./build.sh --device x1q 2>&1 | tee build.log
           ls -l boot-x1q.img
 
+      # Always upload the build log, including on failure, so the reason for a
+      # failed run is visible without the Actions web UI.
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x1q-build-log
+          path: build.log
+          if-no-files-found: warn
+
       - name: Upload artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: x1q
