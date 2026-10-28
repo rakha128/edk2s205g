@@ -14,7 +14,12 @@ on:
 jobs:
   build:
     name: Build boot-x1q.img
-    runs-on: ubuntu-latest
+    # Do not use ubuntu-latest here. Once it moved to a GCC that defaults to
+    # C23, edk2's bundled BaseTools fail to build (Pccts/dlg declares functions
+    # with () and C23 reads that as "no arguments"):
+    #   main.c:163:42: error: too many arguments to function 'p->process'
+    # Ubuntu 24.04 ships GCC 13, which still builds this pinned BaseTools.
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
 
     steps:
