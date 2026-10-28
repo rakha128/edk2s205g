@@ -1,0 +1,41 @@
+# Dedicated build for the Samsung Galaxy S20 5G (x1q) port.
+# Keep the package list in sync with main.yml when the toolchain changes.
+#
+# This exists separately from main.yml so that pushing the x1q branch to a
+# fork builds only one image instead of the full ~18 device matrix.
+
+name: x1q Build
+
+on:
+  push:
+    branches: [x1q]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build boot-x1q.img
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install required packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential uuid-dev clang llvm iasl nasm \
+            gcc-aarch64-linux-gnu python3-pil python3-git gettext
+
+      - name: Build
+        run: |
+          ./build.sh --device x1q
+          ls -l boot-x1q.img
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x1q
+          path: ./*.img
+          if-no-files-found: error
