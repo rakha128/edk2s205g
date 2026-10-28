@@ -1,6 +1,6 @@
 # Samsung Galaxy S20 5G (x1q / SC-51A) — SM8250 UEFI port
 
-Status: **scaffolded, never booted.** This is a UEFI firmware port only. It is
+Status: **builds in CI, never booted on hardware.** This is a UEFI firmware port only. It is
 not a Windows port and there is no ACPI/DSDT for x1q.
 
 ## Files added
@@ -90,7 +90,13 @@ Samsung does not use fastboot for this. The usual flow:
    device was first rooted: a `vbmeta.img` flashed with
    `--disable-verity --disable-verification`). A stock, verification-enabled
    vbmeta will reject this unsigned boot image with `SECURE CHECK FAIL : boot`.
-3. Put `boot-x1q.img` into a tar: `tar -cf boot-x1q.tar boot-x1q.img`.
+3. Odin looks up the partition by the file name *inside* the tar, so the entry
+   must be called `boot.img`, not `boot-x1q.img`:
+
+   ```sh
+   mkdir stage && cp boot-x1q.img stage/boot.img
+   tar -cf boot-x1q.tar -C stage boot.img
+   ```
 4. Reboot to download mode (power off, hold Vol Down + Vol Up, plug USB), flash
    the tar in Odin's **AP** slot. On macOS use Jodin3/WebUSB or a Windows VM;
    Heimdall support for SM8250 Samsung devices is unreliable.
