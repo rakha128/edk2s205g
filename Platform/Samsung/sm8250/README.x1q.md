@@ -62,9 +62,23 @@ cd edk2-msm
 # output: boot-x1q.img
 ```
 
-GitHub Actions: fork the repo, push these changes to `master`, and download the
-`x1q` artifact from the workflow run. `build.sh` initializes the submodules
-itself, so a plain `actions/checkout` is enough.
+GitHub Actions (no Linux machine needed):
+
+```sh
+# once, on github.com: fork edk2-porting/edk2-msm
+git remote add fork https://github.com/<your-username>/edk2-msm.git
+git push fork HEAD:refs/heads/x1q
+```
+
+Pushing the `x1q` branch runs `.github/workflows/x1q.yml`, which builds only
+this device (the full matrix in `main.yml` runs on `master` and takes hours).
+Wait for the `x1q Build` run to finish, then download the `x1q` artifact; it
+contains `boot-x1q.img`. `build.sh` initializes the submodules itself, so a
+plain `actions/checkout` is enough.
+
+If the run fails, the failing step is almost always the `Build` step and the
+log shows the edk2 error. Re-run it from the Actions tab
+(`workflow_dispatch`) after fixing.
 
 ## Flash (read this before touching the phone)
 
@@ -72,14 +86,16 @@ Samsung does not use fastboot for this. The usual flow:
 
 1. Unlock the bootloader (OEM unlocking in developer options, then the
    download-mode unlock). Confirm KG state is not permanently locked.
-2. Put `boot-x1q.img` into a tar: `tar -cf boot-x1q.tar boot-x1q.img`.
-3. Reboot to download mode (power off, hold Vol Down + Vol Up, plug USB), flash
+2. Make sure vbmeta verification is already disabled (normally done when the
+   device was first rooted: a `vbmeta.img` flashed with
+   `--disable-verity --disable-verification`). A stock, verification-enabled
+   vbmeta will reject this unsigned boot image with `SECURE CHECK FAIL : boot`.
+3. Put `boot-x1q.img` into a tar: `tar -cf boot-x1q.tar boot-x1q.img`.
+4. Reboot to download mode (power off, hold Vol Down + Vol Up, plug USB), flash
    the tar in Odin's **AP** slot. On macOS use Jodin3/WebUSB or a Windows VM;
    Heimdall support for SM8250 Samsung devices is unreliable.
-4. If the bootloader refuses to boot the unsigned image, flash a `vbmeta.img`
-   with AVB verification disabled (`fastboot --disable-verity
-   --disable-verification flash vbmeta vbmeta.img` on a device that exposes
-   fastboot, or the equivalent Odin tar), then flash boot again.
+5. If the bootloader refuses to boot the unsigned image, that is the vbmeta
+   step above, not the UEFI build. Do not chase it in the source tree.
 
 Recovery: download the stock SC-51A firmware for your region/CSC and flash
 AP + BL + CP + CSC (or HOME_CSC to keep data) in Odin. Do not skip this — have
