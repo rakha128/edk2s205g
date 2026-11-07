@@ -12,7 +12,7 @@ not a Windows port and there is no ACPI/DSDT for x1q.
 | `Platform/Samsung/sm8250/x1q.fdf.inc` | per-device DXE drivers + ACPI tables |
 | `Platform/Samsung/sm8250/Library/x1q/PlatformMemoryMapLib/` | UEFI memory map |
 | `Platform/Samsung/sm8250/FdtBlob_compat/x1q.dtb` | device tree appended to the boot image |
-| `.github/workflows/main.yml` | added `x1q` to the build matrix |
+| `.github/workflows/x1q.yml` | x1q-only CI (runs on pushes to `master`/`x1q`) |
 
 ## What is verified, what is a guess
 
@@ -67,18 +67,23 @@ GitHub Actions (no Linux machine needed):
 ```sh
 # once, on github.com: fork edk2-porting/edk2-msm
 git remote add fork https://github.com/<your-username>/edk2-msm.git
+git push fork HEAD:refs/heads/master
 git push fork HEAD:refs/heads/x1q
 ```
 
-Pushing the `x1q` branch runs `.github/workflows/x1q.yml`, which builds only
-this device (the full matrix in `main.yml` runs on `master` and takes hours).
+Pushing either `master` or `x1q` runs `.github/workflows/x1q.yml`, which builds
+only this device. The full ~18-device matrix in `main.yml` no longer runs on
+push; start it by hand from the Actions tab (`workflow_dispatch`) if you need
+other devices.
 Wait for the `x1q Build` run to finish, then download the `x1q` artifact; it
 contains `boot-x1q.img`. `build.sh` initializes the submodules itself, so a
 plain `actions/checkout` is enough.
 
 If the run fails, the failing step is almost always the `Build` step and the
 log shows the edk2 error. Re-run it from the Actions tab
-(`workflow_dispatch`) after fixing.
+(`workflow_dispatch`) after fixing. Keep `runs-on: ubuntu-24.04`: on
+`ubuntu-latest` the edk2 BaseTools build fails with a C23
+`too many arguments to function 'p->process'` error.
 
 ## Flash (read this before touching the phone)
 

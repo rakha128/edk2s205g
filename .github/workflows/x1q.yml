@@ -7,8 +7,10 @@
 name: x1q Build
 
 on:
+  # master is included so that a fork whose default branch carries this port
+  # builds on every push without extra branch juggling.
   push:
-    branches: [x1q]
+    branches: [master, x1q]
   workflow_dispatch:
 
 jobs:
